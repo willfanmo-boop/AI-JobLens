@@ -3,7 +3,7 @@ import random
 import logging
 from urllib.parse import quote
 from playwright.sync_api import sync_playwright
-from WebScraper import JobStorage
+from scraper import job_storage as JobStorage
 
 logging.basicConfig(
     level=logging.INFO,

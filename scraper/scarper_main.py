@@ -6,7 +6,7 @@ load_dotenv()
 
 
 def run_scraper():
-    from WebScraper.Scraper import LinkedInScraper
+    from scraper.core_scraper import LinkedInScraper
 
     email    = os.getenv("LINKEDIN_EMAIL")
     password = os.getenv("LINKEDIN_PASSWORD")
