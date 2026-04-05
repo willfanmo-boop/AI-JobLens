@@ -19,7 +19,7 @@ def run_scraper():
     scraper.login(email, password)
 
     scraper.scrape_all_jobs(
-        experience_level="1%2C2",  # 实习 + 入门级
+        experience_level="1%2C2",  
         location="104444106",      # Hamilton, Ontario, Canada
         keywords="computer science",
         target_count=250,
