@@ -125,7 +125,7 @@ while True:
     
     if content.lower() in ['chathistory']:
         for item in chat_history:
-            print(item)
+            print(item.content)
         continue
         
     chat_history.append(HumanMessage(content=content))
