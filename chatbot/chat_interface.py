@@ -108,14 +108,40 @@ agent = create_agent(
     system_prompt=system_prompt
 )
 
-content = input("Ask a question: ")
+from langchain_core.messages import HumanMessage
 
-# Run
-result = agent.invoke({
-    "messages": [
-        {"role": "user", 
-        "content": content}
-    ]
-})
+chat_history = []
+print("\n💬 AI Career Assistant is running! (Type 'quit' or 'exit' to stop)")
 
-print(result["messages"][-1].content)
+while True:
+    content = input("\nYou: ")
+    if content.lower() in ['quit', 'exit']:
+        print("Goodbye!")
+        break
+    
+    if content.lower() in ['clear', 'clean']:
+        chat_history = []
+        print("Chat history cleared.")
+    
+    if content.lower() in ['chathistory']:
+        for item in chat_history:
+            print(item)
+        continue
+        
+    chat_history.append(HumanMessage(content=content))
+    
+    try:
+        result = agent.invoke({
+            "messages": chat_history[-10:]
+        })
+        
+        # Get final response and add it to history to form the memory loop
+        ai_response = result["messages"][-1]
+        print(f"\nAI: {ai_response.content}")
+        
+        chat_history.append(ai_response)
+        
+    except Exception as e:
+        print(f"\n[Error during execution]: {e}")
+        # If there's an error, pop the last user message so they can try again.
+        chat_history.pop()
