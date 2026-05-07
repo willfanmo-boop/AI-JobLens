@@ -6,6 +6,7 @@ from langchain_openai import ChatOpenAI
 import pandas as pd
 
 
+
 load_dotenv()
 
 # Chat model
@@ -78,15 +79,12 @@ def pandas_job_retriever(query: str) -> str:
     """
     Use this for statistical, analytical, or quantitative queries about the overall job market.
     E.g., counting jobs, calculating averages, or finding the most common skills.
-    Args:
-        query: The analytical question to ask the data analyst.
     """
     response = panda_agent.invoke(query)
     return response['output']
 
 
 # Agent 
-from langchain.agents import create_agent
 
 tools = [resume_retriever, chroma_job_retriever, pandas_job_retriever]
 system_prompt = (
