@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  ============================================================================
+  BACKEND INTEGRATION  (Resume page)
+  ----------------------------------------------------------------------------
+  Set the API base URL in the data-props "apiBase" field at the bottom of this
+  file. When apiBase is empty OR a request fails, the page simulates a successful
+  upload locally so it stays usable offline.
+
+  Endpoints this page calls — search for "BACKEND:" below to find each one:
+    • POST {apiBase}/resume/upload   (multipart/form-data, field name "file")
+        returns: { chunks: number }   // number of indexed semantic chunks
+  ============================================================================
+-->
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{font-family:'Hanken Grotesk',system-ui,-apple-system,sans-serif;color:#1b1b1f;-webkit-font-smoothing:antialiased;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+  ::-webkit-scrollbar{width:11px;height:11px;}
+  ::-webkit-scrollbar-thumb{background:#dadae1;border-radius:8px;border:3px solid #fff;background-clip:content-box;}
+  ::-webkit-scrollbar-thumb:hover{background:#c8c8d0;background-clip:content-box;border:3px solid #fff;}
+</style>
+</helmet>
+
+<template id="__bundler_thumbnail">
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="20" fill="#4b54d4"/><rect x="34" y="26" width="32" height="44" rx="5" stroke="#fff" stroke-width="3.4" fill="none"/><path d="M42 40h16M42 49h16M42 58h9" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/></svg>
+</template>
+<div style="display:flex;height:100vh;width:100%;background:#fff;overflow:hidden;">
+
+  <aside style="width:252px;flex:none;height:100%;display:flex;flex-direction:column;background:#fafafa;border-right:1px solid #ededf1;">
+    <div style="padding:18px 16px 14px;display:flex;align-items:center;gap:10px;">
+      <div style="width:28px;height:28px;border-radius:8px;background:var(--ac,#4b54d4);display:flex;align-items:center;justify-content:center;flex:none;">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 2.5l4.5 2.6v5.8L8 13.5 3.5 10.9V5.1L8 2.5z" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/><circle cx="8" cy="8" r="1.7" fill="#fff"/></svg>
+      </div>
+      <span style="font-size:15.5px;font-weight:600;letter-spacing:-.01em;">{{ brandName }}</span>
+    </div>
+
+    <div style="padding:6px 12px 4px;">
+      <a href="chat.html" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:9px 12px;border-radius:9px;border:1px solid var(--ac,#4b54d4);background:var(--ac,#4b54d4);color:#fff;font-size:13.5px;font-weight:600;text-decoration:none;" style-hover="filter:brightness(1.07)">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2.5v9M2.5 7h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        New chat
+      </a>
+    </div>
+
+    <nav style="padding:10px 12px 6px;display:flex;flex-direction:column;gap:2px;">
+      <a href="chat.html" style="display:flex;align-items:center;gap:11px;width:100%;padding:8px 11px;border-radius:8px;font-size:14px;text-decoration:none;background:transparent;color:#46464e;font-weight:500;" style-hover="background:#f0f0f4">
+        <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="3" width="13" height="9.5" rx="2.6"/><path d="M5.8 12.5l-1.3 2.6 3.7-2.6" stroke-linejoin="round" stroke-linecap="round"/></svg>
+        <span>Chat</span>
+      </a>
+      <a href="jobs.html" style="display:flex;align-items:center;gap:11px;width:100%;padding:8px 11px;border-radius:8px;font-size:14px;text-decoration:none;background:transparent;color:#46464e;font-weight:500;" style-hover="background:#f0f0f4">
+        <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="5.2" width="13" height="9" rx="1.8"/><path d="M6.6 5.2V4.1A1.5 1.5 0 0 1 8.1 2.6h1.8a1.5 1.5 0 0 1 1.5 1.5v1.1" stroke-linecap="round"/></svg>
+        <span>Jobs</span>
+      </a>
+      <a href="resume.html" style="display:flex;align-items:center;gap:11px;width:100%;padding:8px 11px;border-radius:8px;font-size:14px;text-decoration:none;background:var(--act,#eef0fc);color:var(--ac,#4b54d4);font-weight:600;">
+        <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="2.5" width="10" height="13" rx="1.8"/><path d="M6.6 6.2h4.8M6.6 9h4.8M6.6 11.8h2.8" stroke-linecap="round"/></svg>
+        <span>Resume</span>
+      </a>
+    </nav>
+
+    <div style="flex:1;min-height:0;overflow-y:auto;padding:14px 12px 8px;">
+      <sc-if value="{{ hasSessions }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#a0a0a8;padding:0 8px 8px;">Recent</div>
+      </sc-if>
+      <sc-for list="{{ sessionList }}" as="s" hint-placeholder-count="0">
+        <button onClick="{{ s.onClick }}" style="{{ s.style }}" style-hover="background:#f0f0f4">
+          <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">{{ s.title }}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="padding:12px 16px;border-top:1px solid #ededf1;display:flex;align-items:center;gap:10px;">
+      <div style="width:28px;height:28px;border-radius:50%;background:#e9e9ee;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#76767e;flex:none;">U</div>
+      <div style="min-width:0;">
+        <div style="font-size:13px;font-weight:500;color:#3a3a42;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Local user</div>
+        <div style="font-size:11.5px;color:#a0a0a8;">Single-user · Phase 1</div>
+      </div>
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;height:100%;display:flex;flex-direction:column;position:relative;">
+    <div data-screen-label="Resume" style="height:100%;overflow-y:auto;">
+      <div style="max-width:620px;margin:0 auto;padding:52px 28px 48px;">
+        <div style="margin-bottom:28px;">
+          <h1 style="font-size:24px;font-weight:600;letter-spacing:-.02em;margin:0 0 8px;">Upload your resume</h1>
+          <p style="font-size:14.5px;color:#76767e;line-height:1.55;margin:0;">Once uploaded, the AI reads and indexes your resume so it can give personalized job recommendations and advice in chat. Supports <strong style="color:#3a3a42;font-weight:600;">.md</strong> and <strong style="color:#3a3a42;font-weight:600;">.pdf</strong>.</p>
+        </div>
+
+        <div onClick="{{ onPickFile }}" onDragOver="{{ onDragOver }}" onDragLeave="{{ onDragLeave }}" onDrop="{{ onDrop }}" style="{{ dropzoneStyle }}">
+          <input ref="{{ fileRef }}" type="file" accept=".md,.pdf,.markdown" onChange="{{ onFileChange }}" style="display:none;"/>
+          <div style="width:46px;height:46px;border-radius:13px;background:var(--act,#eef0fc);display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="var(--ac,#4b54d4)" stroke-width="1.6"><path d="M11 14.5V4.5M7 8l4-4 4 4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.5 14v2.5a1.5 1.5 0 0 0 1.5 1.5h10a1.5 1.5 0 0 0 1.5-1.5V14" stroke-linecap="round"/></svg>
+          </div>
+          <div style="font-size:14.5px;font-weight:600;color:#2a2a32;margin-bottom:4px;">{{ dropTitle }}</div>
+          <div style="font-size:13px;color:#9a9aa2;">Click to choose, or drag a file here</div>
+        </div>
+
+        <sc-if value="{{ uploading }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:18px;padding:16px;border:1px solid #ededf1;border-radius:12px;background:#fafafb;">
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:9px;">
+              <span style="color:#3a3a42;font-weight:500;">{{ uploadName }}</span>
+              <span style="font-family:'JetBrains Mono',monospace;color:var(--ac,#4b54d4);">{{ uploadPct }}</span>
+            </div>
+            <div style="height:6px;background:#ececf0;border-radius:4px;overflow:hidden;">
+              <div style="{{ progressStyle }}"></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ hasResume }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:18px;padding:18px;border:1px solid var(--act,#dfe2f8);border-radius:13px;background:var(--act,#f6f7fe);display:flex;gap:14px;align-items:flex-start;">
+            <div style="width:34px;height:34px;border-radius:10px;background:var(--ac,#4b54d4);display:flex;align-items:center;justify-content:center;flex:none;">
+              <svg width="17" height="17" viewBox="0 0 18 18" fill="none"><path d="M4 9.5l3.2 3.2L14 6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:14px;font-weight:600;color:#1b1b1f;">{{ resumeHeadline }}</div>
+              <div style="font-size:13px;color:#6c6c74;margin-top:3px;line-height:1.5;">{{ resumeSubline }}</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <div style="margin-top:30px;padding-top:22px;border-top:1px solid #f0f0f3;">
+          <div style="font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#a0a0a8;margin-bottom:12px;">How indexing works</div>
+          <div style="display:flex;flex-direction:column;gap:11px;">
+            <div style="display:flex;gap:11px;align-items:flex-start;font-size:13.5px;color:#5c5c66;line-height:1.5;"><span style="color:var(--ac,#4b54d4);font-weight:600;flex:none;">1</span><span>Your resume is split into semantic chunks and stored in a vector database.</span></div>
+            <div style="display:flex;gap:11px;align-items:flex-start;font-size:13.5px;color:#5c5c66;line-height:1.5;"><span style="color:var(--ac,#4b54d4);font-weight:600;flex:none;">2</span><span>During chat, the AI retrieves relevant chunks and combines them with the job database for targeted advice.</span></div>
+            <div style="display:flex;gap:11px;align-items:flex-start;font-size:13.5px;color:#5c5c66;line-height:1.5;"><span style="color:var(--ac,#4b54d4);font-weight:600;flex:none;">3</span><span>Re-uploading overwrites the old resume and re-indexes it.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;bottom:26px;left:50%;transform:translateX(-50%);background:#1b1b22;color:#fff;padding:11px 18px;border-radius:10px;font-size:13.5px;font-weight:500;box-shadow:0 6px 24px rgba(20,20,30,.22);animation:fadeUp .25s ease both;z-index:50;">{{ toast }}</div>
+    </sc-if>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;accentColor&quot;: { &quot;editor&quot;: &quot;color&quot;, &quot;default&quot;: &quot;#4b54d4&quot;, &quot;tsType&quot;: &quot;string&quot; },
+  &quot;brandName&quot;: { &quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;JobPilot&quot;, &quot;tsType&quot;: &quot;string&quot; },
+  &quot;apiBase&quot;: { &quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;&quot;, &quot;tsType&quot;: &quot;string&quot; }
+}">
+class Component extends DCLogic {
+  state = {
+    sessions: [], uploading: false, uploadPct: 0, uploadName: '', dragOver: false, resume: null, toast: null,
+  };
+  fileRef = React.createRef();
+
+  // ⚠ BACKEND: base URL of your API. Set via the "apiBase" data-prop above.
+  get API() { return (this.props.apiBase || '').replace(/\/$/, ''); }
+
+  componentDidMount() {
+    this.applyAccent();
+    try {
+      const raw = localStorage.getItem('aijp_sessions');
+      if (raw) { const d = JSON.parse(raw); this.setState({ sessions: d.sessions || [] }); }
+      // NOTE: resume metadata cached locally for the demo. With a backend you'd
+      // fetch the current resume status from the server instead.
+      const r = localStorage.getItem('aijp_resume');
+      if (r) this.setState({ resume: JSON.parse(r) });
+    } catch (e) {}
+  }
+  componentDidUpdate() { this.applyAccent(); }
+
+  applyAccent() {
+    const ac = this.props.accentColor || '#4b54d4';
+    const root = document.documentElement;
+    root.style.setProperty('--ac', ac);
+    root.style.setProperty('--act', ac + '1c');
+  }
+
+  delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+  showToast(msg) { clearTimeout(this._t); this.setState({ toast: msg }); this._t = setTimeout(() => this.setState({ toast: null }), 2600); }
+
+  // Clicking a recent chat in the sidebar hands off to the chat page.
+  openSession(id) {
+    try { const raw = localStorage.getItem('aijp_sessions'); const d = raw ? JSON.parse(raw) : { sessions: this.state.sessions }; localStorage.setItem('aijp_sessions', JSON.stringify({ sessions: d.sessions || this.state.sessions, activeId: id })); } catch (e) {}
+    window.location.href = 'chat.html';
+  }
+
+  pickFile() { if (this.fileRef.current) this.fileRef.current.click(); }
+  onDrop(e) { e.preventDefault(); this.setState({ dragOver: false }); if (e.dataTransfer && e.dataTransfer.files) this.handleFiles(e.dataTransfer.files); }
+
+  async handleFiles(list) {
+    const file = list && list[0];
+    if (!file) return;
+    if (!/\.(md|markdown|pdf)$/i.test(file.name)) { this.showToast('Only .md or .pdf files are supported'); return; }
+    this.setState({ uploading: true, uploadPct: 0, uploadName: file.name, resume: null });
+    // The 0–90% bar here is a cosmetic simulation. Wire it to real upload
+    // progress (XHR onprogress) if your endpoint streams it.
+    for (let p = 0; p <= 90; p += 9) { this.setState({ uploadPct: p }); await this.delay(60); }
+    let chunks;
+    try {
+      // ⚠ BACKEND: upload the file for parsing + indexing.
+      //   POST {API}/resume/upload  (multipart, field "file")  ->  { chunks }
+      const fd = new FormData(); fd.append('file', file);
+
+      const res = await fetch(this.API + '/resume/upload',
+                              { method: 'POST', body: fd }
+                              );
+
+      if (!res.ok) throw new Error('bad');
+      const data = await res.json();
+      chunks = data.chunks;
+    } catch (e) {
+      // Fallback: fake a chunk count from file size. Remove once endpoint is live.
+      chunks = Math.max(4, Math.round((file.size || 4000) / 900));
+    }
+    this.setState({ uploadPct: 100 });
+    await this.delay(250);
+    const resume = { name: file.name, chunks, at: Date.now() };
+    this.setState({ uploading: false, resume });
+    try { localStorage.setItem('aijp_resume', JSON.stringify(resume)); } catch (e) {}
+    this.showToast('Resume indexed');
+  }
+
+  fmtTime(ts) {
+    const d = new Date(ts);
+    const p = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+
+  renderVals() {
+    const r = this.state.resume;
+    return {
+      brandName: this.props.brandName || 'JobPilot',
+      hasSessions: this.state.sessions.length > 0,
+      sessionList: this.state.sessions.slice().sort((a, b) => b.updatedAt - a.updatedAt).map(s => ({
+        title: s.title || 'New chat',
+        onClick: () => this.openSession(s.id),
+        style: { width: '100%', textAlign: 'left', border: 'none', borderRadius: '8px', padding: '8px 9px', fontSize: '13px', fontFamily: 'inherit', cursor: 'pointer', color: '#5c5c66', background: 'transparent', fontWeight: 400, marginBottom: '2px' },
+      })),
+
+      onPickFile: () => this.pickFile(),
+      fileRef: this.fileRef,
+      onFileChange: (e) => this.handleFiles(e.target.files),
+      onDragOver: (e) => { e.preventDefault(); if (!this.state.dragOver) this.setState({ dragOver: true }); },
+      onDragLeave: (e) => { e.preventDefault(); this.setState({ dragOver: false }); },
+      onDrop: (e) => this.onDrop(e),
+      dropzoneStyle: { border: this.state.dragOver ? '2px dashed var(--ac,#4b54d4)' : '2px dashed #dcdce2', borderRadius: '15px', padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', cursor: 'pointer', background: this.state.dragOver ? 'var(--act,#f6f7fe)' : '#fcfcfd', transition: 'border-color .15s, background .15s' },
+      dropTitle: this.state.dragOver ? 'Drop to upload' : 'Choose a resume file',
+      uploading: this.state.uploading,
+      uploadName: this.state.uploadName,
+      uploadPct: this.state.uploadPct + '%',
+      progressStyle: { height: '100%', width: this.state.uploadPct + '%', background: 'var(--ac,#4b54d4)', borderRadius: '4px', transition: 'width .2s ease' },
+      hasResume: !!r && !this.state.uploading,
+      resumeHeadline: r ? ('Indexed ' + r.chunks + ' chunks — the AI can now read your resume') : '',
+      resumeSubline: r ? (r.name + ' · last updated ' + this.fmtTime(r.at)) : '',
+      toast: this.state.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>
