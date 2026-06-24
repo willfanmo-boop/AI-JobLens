@@ -4,7 +4,7 @@ from typing import Optional
 
 from jobspy import scrape_jobs
 
-from db.session import SessionLocal
+from db.session import AsyncSessionLocal
 from db.crud import upsert_jobs
 from core.rag.job_indexer import index_jobs
 
@@ -41,8 +41,8 @@ async def fetch_and_store_jobs(
     job_dicts = jobs_df.where(jobs_df.notna(), other=None).to_dict(orient="records")
     logger.info(f"Found {len(job_dicts)} jobs")
 
-    async with SessionLocal() as session:
-        inserted = await upsert_jobs(session, job_dicts)
+    async with AsyncSessionLocal() as db:
+        inserted = await upsert_jobs(db, job_dicts)
 
     logger.info(f"Inserted {inserted} new jobs into MySQL")
 

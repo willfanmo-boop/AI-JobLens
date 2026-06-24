@@ -31,3 +31,5 @@ vector_db/
 .vscode/
 *.swp
 *.swo
+
+graphify-out/

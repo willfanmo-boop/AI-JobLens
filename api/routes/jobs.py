@@ -1,9 +1,10 @@
 import logging
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.schemas import JobFetchRequest, JobFetchResponse, JobListResponse, JobRecord
 from core.job_fetcher import fetch_and_store_jobs
-from db.session import SessionLocal
+from db.session import get_db
 from db.crud import list_jobs, count_jobs
 
 logger = logging.getLogger(__name__)
@@ -34,12 +35,11 @@ async def fetch_jobs(request: JobFetchRequest):
 async def list_jobs_endpoint(
     limit: int = Query(default=20, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
+    db: AsyncSession = Depends(get_db),
 ):
     """List jobs stored in MySQL with pagination."""
-    async with SessionLocal() as session:
-        total = await count_jobs(session)
-        jobs = await list_jobs(session, limit=limit, offset=offset)
-
+    total = await count_jobs(db)
+    jobs = await list_jobs(db, limit=limit, offset=offset)
     return JobListResponse(
         total=total,
         jobs=[JobRecord.model_validate(j) for j in jobs],

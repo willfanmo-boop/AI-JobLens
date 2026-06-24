@@ -13,4 +13,20 @@ engine = create_async_engine(
     echo=False,
 )
 
-SessionLocal = async_sessionmaker(engine, class_=AsyncSession, autocommit=False, autoflush=False)
+AsyncSessionLocal = async_sessionmaker(
+    engine,
+    class_=AsyncSession,
+    autocommit=False,
+    autoflush=False
+)
+
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
