@@ -26,6 +26,9 @@ data/
 docs/
 vector_db/
 
+# Personal notes
+Worksheet.md
+
 # IDEs and Editors
 .idea/
 .vscode/
