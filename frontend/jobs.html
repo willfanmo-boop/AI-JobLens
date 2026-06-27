@@ -218,12 +218,23 @@ class Component extends DCLogic {
   // ⚠ BACKEND: base URL of your API. Set via the "apiBase" data-prop above.
   get API() { return (this.props.apiBase || '').replace(/\/$/, ''); }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.applyAccent();
+    // ── BACKEND HOOK: GET /chat/sessions ─────────────────────────────────────
+    // 后端返回 { sessions: [{session_id, title, updated_at}] }
     try {
-      const raw = localStorage.getItem('aijp_sessions');
-      if (raw) { const d = JSON.parse(raw); this.setState({ sessions: d.sessions || [], activeId: d.activeId || null }); }
-    } catch (e) {}
+      const res = await fetch(this.API + '/chat/sessions');
+      if (res.ok) {
+        const data = await res.json();
+        const sessions = (data.sessions || []).map(s => ({
+          id: s.session_id, sid: s.session_id,
+          title: s.title || 'New chat',
+          updatedAt: s.updated_at,
+        }));
+        this.setState({ sessions });
+      }
+    } catch (e) { /* sidebar stays empty, not a crash */ }
+    // ─────────────────────────────────────────────────────────────────────────
     this.loadJobs(true);
   }
   componentDidUpdate() { this.applyAccent(); }
@@ -240,8 +251,9 @@ class Component extends DCLogic {
 
   // Clicking a recent chat in the sidebar hands off to the chat page.
   openSession(id) {
-    try { const raw = localStorage.getItem('aijp_sessions'); const d = raw ? JSON.parse(raw) : { sessions: this.state.sessions }; localStorage.setItem('aijp_sessions', JSON.stringify({ sessions: d.sessions || this.state.sessions, activeId: id })); } catch (e) {}
-    window.location.href = 'chat.html';
+    // ── BACKEND HOOK: session_id 通过 URL 参数传给 chat.html ──────────────────
+    window.location.href = 'chat.html?session_id=' + encodeURIComponent(id);
+    // ─────────────────────────────────────────────────────────────────────────
   }
 
   async loadJobs(reset) {

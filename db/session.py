@@ -6,9 +6,9 @@ load_dotenv()
 
 MYSQL_URL = os.getenv("MYSQL_URL", "mysql+asyncmy://root:password@localhost/jobplatform")
 
+
 engine = create_async_engine(
     MYSQL_URL,
-    pool_pre_ping=True,
     pool_recycle=3600,
     echo=False,
 )

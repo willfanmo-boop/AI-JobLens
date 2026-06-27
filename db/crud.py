@@ -1,10 +1,12 @@
 import pandas as pd
+from langchain_core.messages import message_to_dict
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy import select, func
-
+import json
 from db.models import Job, Session
 from db.session import AsyncSessionLocal
+from langchain_core.messages import messages_to_dict
 
 
 
@@ -70,3 +72,26 @@ async def get_session(db: AsyncSession, session_id: str | None = None):
     query = select(Session).where(Session.id == session_id)
     result = await db.execute(query)
     return result.scalars().one_or_none()
+
+async def save_history(db: AsyncSession, session_id:str, title: str, message: list):
+    json_str = json.dumps(messages_to_dict(message))
+    existing = await get_session(db, session_id)
+    if existing:
+        existing.message_json = json_str
+    else:
+        db.add(Session(
+            id = session_id,
+            title = title,
+            message_json=json_str,
+        ))
+
+async def delete_session(session_id: str, db: AsyncSession) -> bool:
+    session = await get_session(db, session_id)
+    if not session:
+        return False
+    await db.delete(session)
+    await db.commit()
+    return True
+
+
+

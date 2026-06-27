@@ -1,9 +1,7 @@
 import asyncio
 import logging
 from typing import Optional
-
 from jobspy import scrape_jobs
-
 from db.session import AsyncSessionLocal
 from db.crud import upsert_jobs
 from core.rag.job_indexer import index_jobs

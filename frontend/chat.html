@@ -248,14 +248,33 @@ class Component extends DCLogic {
   // ⚠ BACKEND: base URL of your API. Set via the "apiBase" data-prop above.
   get API() { return (this.props.apiBase || '').replace(/\/$/, ''); }
 
-  componentDidMount() {
+  async componentDidMount() {
     this.applyAccent();
-    // NOTE: chat history is kept in localStorage for the single-user demo.
-    // With a backend + auth you'd load sessions from the server instead.
+    const urlSessionId = new URLSearchParams(window.location.search).get('session_id');
+
+
+    // ── BACKEND HOOK: GET /chat/sessions ─────────────────────────────────────
+    // 后端返回 { sessions: [{session_id, title, messages:[{role,content}], updated_at}] }
+
+
+
     try {
-      const raw = localStorage.getItem('aijp_sessions');
-      if (raw) { const d = JSON.parse(raw); this.setState({ sessions: d.sessions || [], activeId: d.activeId || null }); }
-    } catch (e) {}
+      const res = await fetch(this.API + '/chat/sessions');
+      if (res.ok) {
+        const data = await res.json();
+        const sessions = (data.sessions || []).map(s => ({
+          id:        s.session_id,     // ← 对应后端字段 session_id
+          sid:       s.session_id,
+          title:     s.title || 'New chat',
+          messages:  s.messages || [], // ← 对应后端字段 messages [{role,content}]
+          updatedAt: s.updated_at,     // ← 对应后端字段 updated_at (ms epoch)
+        }));
+        this.setState({ sessions, activeId: urlSessionId || null });
+      }
+    } catch (e) {
+      if (urlSessionId) this.setState({ activeId: urlSessionId });
+    }
+    // ─────────────────────────────────────────────────────────────────────────
     this._mk = setInterval(() => { if (window.marked) { clearInterval(this._mk); this.forceUpdate(); } }, 150);
   }
   componentDidUpdate() {
@@ -284,26 +303,45 @@ class Component extends DCLogic {
     return React.createElement('div', { className: 'md-body', dangerouslySetInnerHTML: { __html: html } });
   }
   activeSession() { return this.state.activeId ? this.state.sessions.find(s => s.id === this.state.activeId) : null; }
-  persist() { try { localStorage.setItem('aijp_sessions', JSON.stringify({ sessions: this.state.sessions, activeId: this.state.activeId })); } catch (e) {} }
+  persist() { /* no-op: backend handles persistence */ }
   showToast(msg) { clearTimeout(this._t); this.setState({ toast: msg }); this._t = setTimeout(() => this.setState({ toast: null }), 2600); }
 
-  newChat() { this.setState({ activeId: null, input: '' }, () => this.persist()); }
+  newChat() { this.setState({ activeId: null, input: '' }); }
   openSession(id) { this.setState({ activeId: id }); }
   toggleSidebar() { this.setState(s => ({ sidebarCollapsed: !s.sidebarCollapsed })); }
 
   // Ask for confirmation before deleting.
   confirmDelete(id) { this.setState({ confirmDeleteId: id }); }
   cancelDelete() { this.setState({ confirmDeleteId: null }); }
-  // Delete a single conversation from history (localStorage-backed for the demo).
+  // Delete a single conversation from history.
   deleteSession(id) {
+    const session = this.state.sessions.find(s => s.id === id);
+
+
+    // ── BACKEND HOOK: DELETE /chat/{session_id} ───────────────────────────────
+
+
+
+    if (session?.sid) {
+      fetch(this.API + '/chat/' + session.sid, { method: 'DELETE' }).catch(() => {});
+    }
+    // ─────────────────────────────────────────────────────────────────────────
     const sessions = this.state.sessions.filter(s => s.id !== id);
     const activeId = this.state.activeId === id ? null : this.state.activeId;
-    this.setState({ sessions, activeId, confirmDeleteId: null }, () => { this.persist(); this.showToast('Conversation deleted'); });
+    this.setState({ sessions, activeId, confirmDeleteId: null }, () => { this.showToast('Conversation deleted'); });
   }
   // Clear the entire conversation history.
-  clearAllSessions() {
+  async clearAllSessions() {
     if (!this.state.sessions.length) return;
-    this.setState({ sessions: [], activeId: null }, () => { this.persist(); this.showToast('All conversations cleared'); });
+
+
+    // ── BACKEND HOOK: DELETE /chat/sessions ───────────────────────────────────
+
+
+
+    try { await fetch(this.API + '/chat/sessions', { method: 'DELETE' }); } catch (e) {}
+    // ─────────────────────────────────────────────────────────────────────────
+    this.setState({ sessions: [], activeId: null }, () => { this.showToast('All conversations cleared'); });
   }
 
   async send(text) {
@@ -315,7 +353,7 @@ class Component extends DCLogic {
     active.messages.push({ role: 'human', content: text });
     if (active.messages.length === 1) active.title = text.slice(0, 42);
     active.updatedAt = Date.now();
-    this.setState({ sessions, activeId: active.id, input: '', sending: true }, () => this.persist());
+    this.setState({ sessions, activeId: active.id, input: '', sending: true });
 
     let reply;
 
@@ -347,9 +385,11 @@ class Component extends DCLogic {
     const s2 = this.state.sessions.map(s => ({ ...s, messages: [...s.messages] }));
     const a2 = s2.find(s => s.id === active.id);
     a2.sid = active.sid;
+    // 把内容信息推送给用户
     a2.messages.push({ role: 'ai', content: reply });
     a2.updatedAt = Date.now();
-    this.setState({ sessions: s2, sending: false }, () => this.persist());
+    // 在这边触发重新渲染
+    this.setState({ sessions: s2, sending: false });
   }
 
   // DEMO ONLY — placeholder responses. Delete when /chat is wired up.

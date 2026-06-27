@@ -38,6 +38,7 @@ class Job(Base):
 class Session(Base):
     __tablename__ = "sessions"
     id: Mapped[str] = mapped_column(String(36), primary_key=True)                       # 这边直接就用id来代替SessionID了,UUID的大小正好是36位
+    title: Mapped[str] = mapped_column(String(36), nullable=True)
     message_json: Mapped[str] = mapped_column(Text(4294967295), nullable=True)          # MySQL LONGTEXT 这边后续应该是会要改的,改成存储在数据库的形式,Phase1保持简单功能完善为主
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
