@@ -1,11 +1,12 @@
 from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException
+from nltk.downloader import update
 from sqlalchemy.ext.asyncio import AsyncSession
 from langchain_core.messages import HumanMessage, messages_from_dict
 import json
 from api.schemas import ChatRequest, ChatResponse, MessageRecord, HistoryResponse
 from core.agent import agent
-from db.crud import get_session, save_history, delete_session
+from db.crud import get_session, save_history, delete_session, get_all_sessions
 from db.session import get_db
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -50,20 +51,32 @@ async def chat(request: ChatRequest, db: AsyncSession = Depends(get_db)):
         history.pop()
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/sessions")
+async def list_sessions(db: AsyncSession = Depends(get_db)):
+    sessions = await get_all_sessions(db)
+    result = []
+    for s in sessions:
+        raw_message = messages_from_dict(json.loads(s.message_json)) if s.message_json else []
+        messages = [
+            {"role" : "human" if isinstance(m, HumanMessage) else "ai", "content": m.content }
+            for m in raw_message
+        ]
+        result.append({
+            "session_id": s.id,
+            "title": s.title or "New Chat",
+            "messages": messages,
+            "updated_at": s.updated_at,
+        })
+    return {"sessions": result}
 
-# ── 具体路由（/sessions）必须在通配符路由（/{session_id}）之前 ──────────────
 
-# TODO: GET /sessions — 返回所有 session 列表，前端侧边栏加载用
-# @router.get("/sessions")
-# async def list_sessions(db: AsyncSession = Depends(get_db)):
-#     ...
+@router.delete("/sessions")
+async def clear_all_sessions(db: AsyncSession = Depends(get_db)):
+    sessions = await get_all_sessions(db)
+    for session in sessions:
+        session_id = session.id
+        await delete_session(session_id, db)
 
-# TODO: DELETE /sessions — 清空所有 session，前端 "Clear all" 按钮用
-# @router.delete("/sessions")
-# async def clear_all_sessions(db: AsyncSession = Depends(get_db)):
-#     ...
-
-# ── 通配符路由放后面 ──────────────────────────────────────────────────────────
 
 @router.get("/{session_id}/history", response_model=HistoryResponse)
 async def get_history(session_id: str, db: AsyncSession = Depends(get_db)):

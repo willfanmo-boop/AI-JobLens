@@ -73,6 +73,12 @@ async def get_session(db: AsyncSession, session_id: str | None = None):
     result = await db.execute(query)
     return result.scalars().one_or_none()
 
+async def get_all_sessions(db: AsyncSession):
+    query = select(Session)
+    result = await db.execute(query)
+    return result.scalars().all()
+
+
 async def save_history(db: AsyncSession, session_id:str, title: str, message: list):
     json_str = json.dumps(messages_to_dict(message))
     existing = await get_session(db, session_id)

@@ -30,7 +30,6 @@ class SessionRecord(BaseModel):
     session_id: str
 
 
-
 # ── Jobs ──────────────────────────────────────────────────────────────────────
 
 class JobFetchRequest(BaseModel):
